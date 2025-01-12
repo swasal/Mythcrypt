@@ -163,3 +163,5 @@ cython_debug/
 
 #custom ignore folders
 rsa_key
+*.txt
+*.pem
