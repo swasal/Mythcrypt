@@ -2,7 +2,6 @@
 
 # imports for shell
 import sys
-import time
 import datetime
 import click
 from click_shell import shell
@@ -32,20 +31,14 @@ console= Console()
 
 
 # shell start function
-@shell(prompt="mythcrypt >", intro=f"""Welcome to the Mythcrypt console [{v}]. 
-Type "exit", "help", or "about" for more information.
+@shell(prompt="mythcrypt >", intro=f"""Welcome to the Mythcrypt console [{v}].
+Your command-line companion for mythically secure file encryption.
+Type "exit", "help", or "about" for more information. 
 """)
 def mythcrypt():
     rprint("[dim]Initializing shell...[/dim]")
-    
-    # Example: create config directory if not exists
-    config_path = os.path.join(os.getenv("LOCALAPPDATA", "."), "mythcrypt")
-    os.makedirs(config_path, exist_ok=True)
-    
-    rprint(f"[green]MythCrypt ready. Config path:[/green] {config_path}")
 
 
-    
 
 #shell commands
 @mythcrypt.command()
@@ -87,9 +80,8 @@ Use the commands below to interact with MythCrypt. Type a command and press [bol
 • [cyan]Plugin system[/cyan] – Extend MythCrypt via community tools
 
 For full documentation and source code, visit:
-[bold green][link=https://github.com/yourname/mythcrypt]https://github.com/yourname/mythcrypt[/link][/bold green]
-""")
-    
+[bold green][link=https://https://github.com/swasal/Mythcrypt]https://https://github.com/swasal/Mythcrypt[/link][/bold green]
+""")   
 
 
 
@@ -99,18 +91,6 @@ def version():
     rprint(f"Current Mythcrypt version is =>[bold magenta]{v}[/bold magenta]")
 
 mythcrypt.add_command(version)
-
-
-
-# @click.command()
-# @click.option("--name", "-n",help="Name of user")
-# # @click.argument("name",type=str)
-# def hello(name):
-#     # name=input("Enter name: ")
-#     print(f"Hello {name}!")
-
-# mythcrypt.add_command(hello)
-
 
 
 
@@ -126,6 +106,7 @@ def generatekeys(path):
         rprint(f"[green]The keys have been generated succesfully[/green]\nThe keypair have been saved here => [magenta]{path}[/magenta]\n")
 
 mythcrypt.add_command(generatekeys)
+
 
 
 @click.command()
@@ -154,20 +135,16 @@ def encryptmsg(key, message, output):
         key=rsa.load_public(key)
     else: rprint(f"[red]Invalid key file[/red]")
 
-
     message=input("Enter message to be encrypted :")
     ciphetext=rsa.encrypt(message, key)
 
-
     #writes to a file
-
     with open(output,"wb") as f:
         f.write(ciphetext)
     if os.path.exists(output):
         rprint(f"The encrypted file have been saved here => [magenta]{output}[/magenta]")
     else: rprint(f"[red]There was an error in saving the file[/red]")
         
-
 mythcrypt.add_command(encryptmsg)
 
 
@@ -176,7 +153,6 @@ mythcrypt.add_command(encryptmsg)
 @click.option("--key", "-k", type=click.Path(), help='Path to a file or directory.', prompt="Enter path to encryption(public) key")
 @click.option("--filepath", "-f", help="The path to the file to be encrypted", prompt="Enter filepath of the file to encrypt")
 def encryptfile(key, filepath):
-
     #loading the key
     if os.path.exists(key):
         key=rsa.load_public(key)
@@ -192,14 +168,12 @@ def encryptfile(key, filepath):
 
     output+=".enc"
 
-    #writes to a file
-    
+    #writes to a file    
     with open(output,"wb") as f:
         f.write(ciphetext)
     if os.path.exists(output):
         rprint(f"The encrypted file have been saved here => [magenta]{output}[/magenta]")
-    else: rprint(f"[red]There was an error in saving the file[/red]")
-        
+    else: rprint(f"[red]There was an error in saving the file[/red]")        
 
 mythcrypt.add_command(encryptfile)
 
@@ -233,8 +207,8 @@ def decryptfile(key, filepath, output ):
         rprint(f"The encrypted file have been saved here => [magenta]{output}[/magenta]")
     else: rprint(f"[red]There was an error in saving the file[/red]")
         
-
 mythcrypt.add_command(decryptfile)
+
 
 
 
@@ -243,4 +217,3 @@ mythcrypt.add_command(decryptfile)
 if __name__ == "__main__":
     # print(f"file running at => {os.path.dirname(__file__)}")
     mythcrypt()
-    
