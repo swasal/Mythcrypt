@@ -1,6 +1,7 @@
 # imports
 
 # imports for shell
+import sys
 import time
 import datetime
 import click
@@ -35,34 +36,60 @@ console= Console()
 Type "exit", "help", or "about" for more information.
 """)
 def mythcrypt():
-    pass
+    rprint("[dim]Initializing shell...[/dim]")
+    
+    # Example: create config directory if not exists
+    config_path = os.path.join(os.getenv("LOCALAPPDATA", "."), "mythcrypt")
+    os.makedirs(config_path, exist_ok=True)
+    
+    rprint(f"[green]MythCrypt ready. Config path:[/green] {config_path}")
 
+
+    
 
 #shell commands
 @mythcrypt.command()
 def help():
-    # rprint("Visit my [link=https://www.google.com]blog[/link]!")
-    rprint(f"""Welcome to Mythcrypt help. For a full documentation of Mythcrypt please refer to the 
-Git-hub documentation => [link={"google.com"} style="green"]Mythcrypt[/link]!
+    """Displays help information for MythCrypt."""
+    rprint(f"""
+[bold cyan]Welcome to MythCrypt Help[/bold cyan]
+[dim]Your command-line companion for mythically secure file encryption.[/dim]
 
-Current version of Mythcrypt => [red]{v}[/red]
+[bold]Version:[/bold] [green]{v}[/green]
 
-The commands available are shown below:""")
+Use the commands below to interact with MythCrypt. Type a command and press [bold]Enter[/bold] to execute it.
+""")
 
-    table = Table(title=None, border_style="dim")
+    table = Table(title="Available Commands", header_style="bold magenta", border_style="dim")
+    table.add_column("Command", style="cyan", no_wrap=True)
+    table.add_column("Description", style="white")
 
-    table.add_column("[bold magenta]Commands[/bold magenta]", justify="left", style="magenta")
-    table.add_column("[bold white]Description[/bold white]", justify="left", style="white")
+    table.add_row("help", "Show this help menu")
+    table.add_row("version", "Display the current version of MythCrypt")
+    table.add_row("generatekeys", "Generate a new RSA public-private key pair")
+    table.add_row("generatepublic", "Generate a public key from a private key")
+    table.add_row("encrypt", "Encrypt a message using a public key")
+    table.add_row("encryptfile", "Encrypt a file using a public key")
+    table.add_row("decryptfile", "Decrypt a file using a private key")
+    table.add_row("devdata", "View internal developer diagnostics")
+    table.add_row("exit", "Exit the MythCrypt shell")
 
-    # table.add_row("command", "description")
-    table.add_row("version", "shows the app version")
-    table.add_row("help", "see this command")
-    table.add_row("hello", "sends a `hello [name]` message")
-    table.add_row("generatekeys","Generates a new rsa keypair")
-    table.add_row("encrypt","Encrypt a file or message with the given key")
-    table.add_row("decrypt","Decrypt a file or message with the given key")
-    table.add_row("exit", "exits the console")
     console.print(table)
+
+    # Future Features
+    rprint("""
+[bold yellow]Coming Soon:[/bold yellow]
+• [cyan]Session key support[/cyan] – Hybrid AES + RSA encryption
+• [cyan]Secure password vault[/cyan] – Store secrets and credentials
+• [cyan]Key validation tools[/cyan] – Verify key integrity and trust
+• [cyan]Metadata encryption[/cyan] – Embed secure headers in your files
+• [cyan]Web GUI[/cyan] – Drag-and-drop frontend for non-technical users
+• [cyan]Plugin system[/cyan] – Extend MythCrypt via community tools
+
+For full documentation and source code, visit:
+[bold green][link=https://github.com/yourname/mythcrypt]https://github.com/yourname/mythcrypt[/link][/bold green]
+""")
+    
 
 
 
@@ -75,14 +102,14 @@ mythcrypt.add_command(version)
 
 
 
-@click.command()
-@click.option("--name", "-n",help="Name of user")
-# @click.argument("name",type=str)
-def hello(name):
-    # name=input("Enter name: ")
-    print(f"Hello {name}!")
+# @click.command()
+# @click.option("--name", "-n",help="Name of user")
+# # @click.argument("name",type=str)
+# def hello(name):
+#     # name=input("Enter name: ")
+#     print(f"Hello {name}!")
 
-mythcrypt.add_command(hello)
+# mythcrypt.add_command(hello)
 
 
 
@@ -90,43 +117,46 @@ mythcrypt.add_command(hello)
 @click.command()
 @click.option("--path", "-p", type=click.Path(), help='Path to a file or directory.', prompt="Enter path to save key pair")
 def generatekeys(path):
-    print(path)
     if path=="None":
         path=None
-        
     else:
-        rprint(f"Path found\nSaving keys here => [magenta]{path}[/magenta]\n")
-    with console.status("Processing...\n", spinner="dots"):
-        time.sleep(2)
+        rprint(f"Path found\n")
+    with console.status("Generating keys...\n", spinner="dots"):
         path=rsa.newkeys(path)
-        rprint(f"[green]The keys have been generated succesfully[/green]\nThe files have been saved here => [magenta]{path}[/magenta]\n")
+        rprint(f"[green]The keys have been generated succesfully[/green]\nThe keypair have been saved here => [magenta]{path}[/magenta]\n")
 
 mythcrypt.add_command(generatekeys)
 
 
+@click.command()
+@click.option("--path", "-p", type=click.Path(), help='Path to a private key.', prompt="Enter private key path")
+def generatepublic(path):
+    if path=="None":
+        rprint(f"[red]No path provided[/red]\n")
+        sys.exit(1)
+    else:
+        rprint(f"Private key found\n")
+    with console.status("Generating public key...\n", spinner="dots"):
+        path=rsa.get_public_key(path)
+        rprint(f"[green]The keys have been generated succesfully[/green]\nThe keypair have been saved here => [magenta]{path}[/magenta]\n")
+
+mythcrypt.add_command(generatepublic)
+
+
 
 @click.command()
-@click.option("--key", "-k", type=click.Path(), help='Path to a file or directory.', prompt="Enter path to encryption(public) key:")
+@click.option("--key", "-k", type=click.Path(), help='Path to a file or directory.', prompt="Enter path to encryption(public) key")
 @click.option("--message", "-m",help="The message to be encrypted using th4e provided key")
-@click.option("--filepath", "-f", help="The path to the file to be encrypted")
 @click.option("--output", "-o",help="output file bool", default=f'ciphertext_{datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}.enc')
-def encrypt(key, message, output, filepath):
+def encryptmsg(key, message, output):
     #loading the key
     if os.path.exists(key):
         key=rsa.load_public(key)
     else: rprint(f"[red]Invalid key file[/red]")
 
-    #if filepath is given overrides the message even if it was given
-    if filepath:
-        with open(filepath, "rb") as f:
-            message=f.read()
 
-        ciphetext=rsa.encryptfile(message, key)
-        output+=os.path.splitext(filepath)[-1]
-
-    else:
-        message=input("Enter message to be encrypted :")
-        ciphetext=rsa.encrypt(message, key)
+    message=input("Enter message to be encrypted :")
+    ciphetext=rsa.encrypt(message, key)
 
 
     #writes to a file
@@ -138,38 +168,75 @@ def encrypt(key, message, output, filepath):
     else: rprint(f"[red]There was an error in saving the file[/red]")
         
 
-mythcrypt.add_command(encrypt)
-
-
-@click.command()
-@click.option("--path", "-p", type=click.Path(), help='Path to a file or directory.', prompt="Enter path to decryption(private) key:")
-@click.option("--ciphertext", prompt="Enter ciphertext to decrypt", help="The message to be decrypted using the provided key")
-def decrypt(path, ciphertext):
-    if os.path.exists(path):
-        ciphertext = eval(f"b'{ciphertext}'")
-        key=rsa.load_private(path)
-        print('loaded key')
-        ciphetext=rsa.decrypt(ciphertext, key)
-        rprint(f"The message is =>\n [magenta]{ciphetext}[/magenta]")
-
-mythcrypt.add_command(decrypt)
+mythcrypt.add_command(encryptmsg)
 
 
 
 @click.command()
-@click.option('--path', type=click.Path(), help='Path to a file or directory.', prompt="Enter path")
-def showpath(path):
-    """Show the normalized path."""
-    click.echo(f"Original path: {(path)}")
+@click.option("--key", "-k", type=click.Path(), help='Path to a file or directory.', prompt="Enter path to encryption(public) key")
+@click.option("--filepath", "-f", help="The path to the file to be encrypted", prompt="Enter filepath of the file to encrypt")
+def encryptfile(key, filepath):
 
-mythcrypt.add_command(showpath)
+    #loading the key
+    if os.path.exists(key):
+        key=rsa.load_public(key)
+    else: rprint(f"[red]Invalid key file[/red]")
+
+    with open(filepath, "rb") as f:
+        message=f.read()
+
+    ciphetext=rsa.encryptfile(message, key)
+    output=input("Please enter a filename for the encrypted file (press enter to skip): ")
+    if output==None or output=="":
+        output=f'ciphertext_{datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}'
+
+    output+=".enc"
+
+    #writes to a file
+    
+    with open(output,"wb") as f:
+        f.write(ciphetext)
+    if os.path.exists(output):
+        rprint(f"The encrypted file have been saved here => [magenta]{output}[/magenta]")
+    else: rprint(f"[red]There was an error in saving the file[/red]")
+        
+
+mythcrypt.add_command(encryptfile)
+
+
 
 @click.command()
-def devdata():
-    """Show the developer info"""
-    click.echo(f"The product is still in development stay tuned for more info.")
+@click.option("--key", "-k", type=click.Path(), help='Path to a file or directory.', prompt="Enter path to encryption(private) key:")
+@click.option("--filepath", "-f", help="The path to the file to be decrypted", prompt="Enter filepath of the file to decrypt")
+@click.option("--output", "-o",help="output file bool", default=f'decyphered_{datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}.txt')
+def decryptfile(key, filepath, output ):
+    #loading the key
+    if os.path.exists(key):
+        key=rsa.load_private(key)
+    else: rprint(f"[red]Invalid key file[/red]")
 
-mythcrypt.add_command(devdata)
+    #if filepath is given overrides the message even if it was given
+    with open(filepath, "rb") as f:
+        message=f.read()
+
+    ciphetext=rsa.decrypt(message, key)
+    output=input("Please enter a filename for the decrypted file (press enter to skip): ")
+    if output==None or output=="":
+        output=f'decyphered_{datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}'
+    
+    output+=".txt"
+
+    #writes to a file
+    with open(output,"wb") as f:
+        f.write(ciphetext)
+    if os.path.exists(output):
+        rprint(f"The encrypted file have been saved here => [magenta]{output}[/magenta]")
+    else: rprint(f"[red]There was an error in saving the file[/red]")
+        
+
+mythcrypt.add_command(decryptfile)
+
+
 
 
 #running the main program

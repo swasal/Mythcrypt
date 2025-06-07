@@ -97,6 +97,46 @@ Unix timestamp: {x}
 
 
 
+
+def save_key(name, key, path, private=None):
+  """Saves the keys to specific path.
+
+  Args:
+    private_key: The private key.
+    public_key: The public key.
+    path: path to save
+  """
+  name=name+".pem"
+
+  if private:
+    private_key_path = os.path.join(path, name)
+
+    with open(private_key_path, 'wb') as f:
+      f.write(key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption()
+    ))
+  
+    return private_key_path
+  # If private is not specified, save as public key
+      
+  else:  
+    public_key_path = os.path.join(path, name)
+
+    with open(public_key_path, 'wb') as f:
+      f.write(key.public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo
+      ))
+
+    return public_key_path
+
+
+
+
+
+
 def newkeys(path=None):
   private_key, public_key = generate_key_pair()
   path=save_key_pair(private_key, public_key,path)
@@ -116,7 +156,7 @@ def get_public_key(private_key_path):
     private_key_path: Path to the private key file.
 
   Returns:
-    The public key as a bytes object.
+    The public key as a bytes object and saves it in the same dir as the privatekey.
   """
 
   with open(private_key_path, 'rb') as key_file:
@@ -127,15 +167,14 @@ def get_public_key(private_key_path):
     )
 
   public_key = private_key.public_key()
-  public_key_bytes = public_key.public_bytes(
-      encoding=serialization.Encoding.PEM,
-      format=serialization.PublicFormat.SubjectPublicKeyInfo
-  )
+  
+  name= os.path.basename(private_key_path)
+  name=os.path.splitext(name)[0]
+  name=name+"_public_key.pem"
+  path=save_key(name, public_key, os.path.dirname(private_key_path), private=False)
+  return path
 
-  with open('public_key.pem', 'wb') as f:
-    f.write(public_key_bytes)
 
-  return public_key_bytes
 
 
 
@@ -163,9 +202,20 @@ def load_public(pem_file_path):
 
 
 
+def loadmessage(message_fileapth):
+  messagefile=open(message_fileapth, "r")
+  rawmessage=messagefile.readlines()
+  message=""
+  for i in rawmessage:
+      message+=i
+
+  return message
+
+
+#
 def encrypt(message, public_key):
   message_bytes = message.encode('utf-8')
-  """Encrypts a message using the public key."""
+  """Encrypts a message in plain english using the public key."""
   return public_key.encrypt(
       message_bytes,
       padding.OAEP(
@@ -178,7 +228,7 @@ def encrypt(message, public_key):
 
 
 def encryptfile(message, public_key):
-  """Encrypts a message using the public key."""
+  """Encrypts a file using the public key."""
   return public_key.encrypt(
       message,
       padding.OAEP(
@@ -190,11 +240,9 @@ def encryptfile(message, public_key):
 
 
 
-
-
 def decrypt(ciphertext, private_key):
   """Decrypts a message using the private key."""
-  message=private_key.decrypt(
+  ciphertext=private_key.decrypt(
       ciphertext,
       padding.OAEP(
           mgf=padding.MGF1(algorithm=hashes.SHA256()),
@@ -203,7 +251,7 @@ def decrypt(ciphertext, private_key):
       )
   )
 
-  return message.decode("utf-8")
+  return ciphertext
 
 
 
