@@ -8,6 +8,8 @@
 - **Key Management**: Generate new RSA key pairs or derive a public key from an existing private key.
 - **Command-Line Interface**: Interactive CLI built with `click` and `click_shell` for ease of use.
 
+**rsa encryption can only encrypt small files trying to encrypt a large file would result in a value error**
+
 ## Getting Started
 
 ### Prerequisites
@@ -35,7 +37,7 @@ mythcrypt >
 ```
 
 
-## 💻 Usage
+## Usage
 Within the Mythcrypt shell, you can use the following commands:
 
 - **help**: Display available commands and their descriptions.
@@ -47,7 +49,7 @@ Within the Mythcrypt shell, you can use the following commands:
 - **decryptfile**: Decrypt a file using a private key.
 - **exit**: Exit the Mythcrypt shell.
 
-## 🛠️ Future Enhancements
+## Future Enhancements
 Planned features for upcoming releases:
 
 - **Session Key Support**: Implement hybrid AES + RSA encryption for enhanced security.
@@ -59,6 +61,7 @@ Planned features for upcoming releases:
 ## Quick Start (Windows)
 
 To run Mythcrypt easily from anywhere on your Windows system, you can create a batch file:
+**Make sure the requirements.txt is installed globally in your machine**
 
 ```bat
 @echo off

@@ -1,20 +1,13 @@
 #imports
-
-
-
+import os
+import time
+import datetime
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.backends import default_backend
 
-
-
-
-  
-import os
-import time
-import datetime
 
 
 
@@ -31,19 +24,19 @@ def generate_key_pair(key_size=4096):
     A tuple of (private_key, public_key).
   """
 
-  private_key = rsa.generate_private_key(
+  private_key=rsa.generate_private_key(
       public_exponent=65537,
       key_size=key_size,
       backend=default_backend()
   )
 
-  public_key = private_key.public_key()
+  public_key=private_key.public_key()
 
   return private_key, public_key
 
 
 
-def save_key_pair(private_key, public_key, path=None):
+def save_key_pair(private_key, public_key, path):
   """Saves the key pair to files.
 
   Args:
@@ -53,17 +46,12 @@ def save_key_pair(private_key, public_key, path=None):
   """
   x=str(round(int(time.time()),0))
 
-
-  if path==None:
-    os.makedirs(os.path.join(os.path.dirname(__file__),f"Rsa keypair_{x}"))
-    path = os.path.join(os.path.dirname(__file__),f"Rsa keypair_{x}")
-  else:
-    os.makedirs(os.path.join(path,f"Rsa keypair_{x}"))
-    path = os.path.join(path,f"Rsa keypair_{x}")
+  os.makedirs(os.path.join(path,f"Rsa keypair_{x}"))
+  path=os.path.join(path,f"Rsa keypair_{x}")
   
   
-  private_key_path = os.path.join(path, 'private_key.pem')
-  public_key_path = os.path.join(path, 'public_key.pem')
+  private_key_path=os.path.join(path, 'private_key.pem')
+  public_key_path=os.path.join(path, 'public_key.pem')
   info=os.path.join(path, 'info.txt')
 
 
@@ -92,7 +80,6 @@ Unix timestamp: {x}
 """
     f.write(s)
 
-
   return path
 
 
@@ -109,7 +96,7 @@ def save_key(name, key, path, private=None):
   name=name+".pem"
 
   if private:
-    private_key_path = os.path.join(path, name)
+    private_key_path=os.path.join(path, name)
 
     with open(private_key_path, 'wb') as f:
       f.write(key.private_bytes(
@@ -122,7 +109,7 @@ def save_key(name, key, path, private=None):
   # If private is not specified, save as public key
       
   else:  
-    public_key_path = os.path.join(path, name)
+    public_key_path=os.path.join(path, name)
 
     with open(public_key_path, 'wb') as f:
       f.write(key.public_bytes(
@@ -138,7 +125,7 @@ def save_key(name, key, path, private=None):
 
 
 def newkeys(path=None):
-  private_key, public_key = generate_key_pair()
+  private_key, public_key=generate_key_pair()
   path=save_key_pair(private_key, public_key,path)
   print(path)
   return path
@@ -149,7 +136,7 @@ def newkeys(path=None):
 
 # - - - - - - - - - - Regenerating public key - - - - - - - - - - 
 
-def get_public_key(private_key_path):
+def get_public_key(private_key_path, filename):
   """Extracts the public key from a private key file.
 
   Args:
@@ -160,18 +147,16 @@ def get_public_key(private_key_path):
   """
 
   with open(private_key_path, 'rb') as key_file:
-    private_key = serialization.load_pem_private_key(
+    private_key=serialization.load_pem_private_key(
         key_file.read(),
         password=None,
         backend=default_backend()
     )
 
-  public_key = private_key.public_key()
+  public_key=private_key.public_key()
   
-  name= os.path.basename(private_key_path)
-  name=os.path.splitext(name)[0]
-  name=name+"_public_key.pem"
-  path=save_key(name, public_key, os.path.dirname(private_key_path), private=False)
+  path= os.path.dirname(private_key_path)
+  path=save_key(filename, public_key, path, private=False)
   return path
 
 
@@ -183,7 +168,7 @@ def get_public_key(private_key_path):
 
 def load_private(pem_file_path, password=None):
     with open(pem_file_path, "rb") as pem_file:
-        private_key = serialization.load_pem_private_key(
+        private_key=serialization.load_pem_private_key(
             pem_file.read(),
             password=password,  # If your private key is encrypted, provide the password here.
             backend=default_backend()
@@ -194,7 +179,7 @@ def load_private(pem_file_path, password=None):
 
 def load_public(pem_file_path):
     with open(pem_file_path, "rb") as pem_file:
-        public_key = serialization.load_pem_public_key(
+        public_key=serialization.load_pem_public_key(
             pem_file.read(),
             backend=default_backend()
         )
@@ -214,7 +199,7 @@ def loadmessage(message_fileapth):
 
 #
 def encrypt(message, public_key):
-  message_bytes = message.encode('utf-8')
+  message_bytes=message.encode('utf-8')
   """Encrypts a message in plain english using the public key."""
   return public_key.encrypt(
       message_bytes,
@@ -258,5 +243,5 @@ def decrypt(ciphertext, private_key):
 
 
 
-if __name__ == '__main__':
+if __name__=='__main__':
   newkeys()

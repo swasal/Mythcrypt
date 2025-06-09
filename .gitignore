@@ -163,7 +163,9 @@ cython_debug/
 
 #custom ignore folders
 rsa_key
+keys
 *.txt
 *.pem
 mythcrypt.bat
 *.enc
+mythcryptlogo.ico
