@@ -2,6 +2,13 @@
 
 **Mythcrypt** is a lightweight, open-source command-line tool designed for secure file encryption. Utilizing RSA encryption, Mythcrypt allows you to encrypt messages and files, generate and manage RSA key pairs keeping them safe from unauthorized access.
 
+## Download
+
+Latest version => ** [Download Mythcrypt Latest](https://github.com/swasal/Mythcrypt/releases/tag/v0.1.0)** 
+
+** [Download Mythcrypt v0.1.0](https://github.com/swasal/Mythcrypt/releases/tag/v0.1.0)**  
+Grab the latest stable release from the official GitHub Releases page.
+
 ## Features
 
 - **RSA Encryption**: Encrypt and decrypt messages and files using RSA public and private keys.

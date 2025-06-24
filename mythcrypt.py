@@ -3,10 +3,8 @@
 # imports for shell
 import sys
 import datetime
-import os
-from pathlib import Path
-import json
 import click
+import os
 from click_shell import shell
 from rich import print as rprint
 from rich.console import Console
@@ -76,6 +74,7 @@ Use the commands below to interact with MythCrypt. Type a command and press [bol
     table.add_row("version", "Display the current version of MythCrypt")
     table.add_row("generatekeys", "Generate a new RSA public-private key pair")
     table.add_row("generatepublic", "Generate a public key from a private key")
+    table.add_row("encryptmsg", "Encrypt a message using a public key")
     table.add_row("encryptfile", "Encrypt a file using a public key")
     table.add_row("decryptfile", "Decrypt a file using a private key") 
     table.add_row("exit", "Exit the MythCrypt shell")
@@ -226,7 +225,6 @@ def encryptfile(key, filepath):
     else:
         key=loadedkeys["public"]
 
-    # checks if the filepath is given
     if filepath is None or filepath=="":
         filepath=input("Enter filepath of the file to encrypt => ")
         if not os.path.exists(filepath):
@@ -236,25 +234,23 @@ def encryptfile(key, filepath):
     #loading the key
     if os.path.exists(key):
         key=rsa.load_public(key)
-    else: 
-        rprint(f"[red]Invalid key file[/red]")
-        sys.exit(1)
+    else: rprint(f"[red]Invalid key file[/red]")
 
-
-    ciphetext=rsa.encryptfile(filepath, key)
-
+    with open(filepath, "rb") as f:
+        message=f.read()
+    ciphetext=rsa.encryptfile(message, key)
     filename=input("Please enter a filename for the encrypted file (press enter to skip): ")
     if filename==None or filename=="":
         filename=f'ciphertext_{datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}'
 
-    filename+=".tome"
+    filename+=".enc"
 
     path= os.path.dirname(filepath)
     output=os.path.join(path, filename)
 
     #writes to a file    
-    with open(output,"w") as f:
-        json.dump(ciphetext, f, indent=4)
+    with open(output,"wb") as f:
+        f.write(ciphetext)
     if os.path.exists(output):
         rprint(f"The encrypted file have been saved here => [#ffcb03][link={output}]{output}[/link]")
         rprint(f"[#ffcb03][link={path}]Link to folder[/link]")
@@ -286,16 +282,14 @@ def decryptfile(key, filepath ):
     else: rprint(f"[red]Invalid key file[/red]")
 
     #if filepath is given overrides the message even if it was given
-    with open(filepath, "r") as f:
-        cipher=json.load(f)
-    
-    ciphetext, file_ext =rsa.decryptfile(cipher, key)
-    
+    with open(filepath, "rb") as f:
+        cipher=f.read()
+    ciphetext=rsa.decrypt(cipher, key)
     filename=input("Please enter a filename for the decrypted file (press enter to skip): ")
     if filename==None or filename=="":
         filename=f'decyphered_{datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}'
     
-    filename+="."+file_ext
+    filename+=".txt"
 
     path= os.path.dirname(filepath)
     output=os.path.join(path, filename)
@@ -303,7 +297,7 @@ def decryptfile(key, filepath ):
     with open(output,"wb") as f:
         f.write(ciphetext)
     if os.path.exists(output):
-        rprint(f"The encrypted file was succesfully saved here => [#ffcb03][link={output}]{output}[/link]")
+        rprint(f"The encrypted file have been saved here => [#ffcb03][link={output}]{output}[/link]")
         rprint(f"[#ffcb03][link={path}]Link to folder[/link]")
     else: rprint(f"[red]There was an error in saving the file[/red]")
         
