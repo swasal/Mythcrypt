@@ -3,6 +3,7 @@ import os
 import time
 import datetime
 import base64
+
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -18,13 +19,19 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 # - - - - - - - - - - Key Generation - - - - - - - - - - 
 
 def generate_key_pair(key_size=4096):
-  """Generates an RSA key pair.
+  """
+  Generates an RSA public-private key pair.
 
   Args:
-    key_size: The size of the key in bits. Defaults to 2048.
+      key_size (int, optional): Length of the RSA key in bits. 
+          Recommended values are 2048, 3072, or 4096. Defaults to 4096.
 
   Returns:
-    A tuple of (private_key, public_key).
+      Tuple[RSAPrivateKey, RSAPublicKey]: A tuple containing the generated 
+      private key and corresponding public key.
+
+  Example:
+      private_key, public_key = generate_key_pair(2048)
   """
 
   private_key=rsa.generate_private_key(
@@ -40,24 +47,36 @@ def generate_key_pair(key_size=4096):
 
 
 def save_key_pair(private_key, public_key, path):
-  """Saves the key pair to files.
+  """
+  Saves an RSA key pair to PEM-formatted files in a timestamped folder.
+
+  This function creates a subdirectory under the given path named 
+  "Rsa keypair_<timestamp>", and writes the private key, public key, 
+  and a plaintext info file describing the contents.
 
   Args:
-    private_key: The private key.
-    public_key: The public key.
-    path: path to save
+      private_key (RSAPrivateKey): The RSA private key to save.
+      public_key (RSAPublicKey): The RSA public key to save.
+      path (str): The directory in which to create the key pair folder.
+
+  Returns:
+      str: The full path to the directory where the key files were saved.
+
+  Example:
+      save_path = save_key_pair(private_key, public_key, "./keys")
+
+  Warning:
+      The private key is saved unencrypted. Handle with extreme caution 
+      and avoid exposing the saved files to untrusted environments.
   """
   x=str(round(int(time.time()),0))
 
   os.makedirs(os.path.join(path,f"Rsa keypair_{x}"))
-  path=os.path.join(path,f"Rsa keypair_{x}")
-  
+  path=os.path.join(path,f"Rsa keypair_{x}") 
   
   private_key_path=os.path.join(path, 'private_key.pem')
   public_key_path=os.path.join(path, 'public_key.pem')
   info=os.path.join(path, 'info.txt')
-
-
 
   with open(private_key_path, 'wb') as f:
       f.write(private_key.private_bytes(
@@ -72,7 +91,6 @@ def save_key_pair(private_key, public_key, path):
       encoding=serialization.Encoding.PEM,
       format=serialization.PublicFormat.SubjectPublicKeyInfo
     ))
-
 
   with open(info, "w") as f:
     s=f"""The folder contains an unencrypted 4096-bit RSA key pair.
@@ -89,12 +107,26 @@ Unix timestamp: {x}
 
 
 def save_key(name, key, path, private=None):
-  """Saves the keys to specific path.
+  """
+  Saves an RSA key (private or public) to a PEM file.
+
+  The key is saved in PEM format to the specified path using the provided name.
+  If `private` is truthy, the key is treated as a private key; otherwise, it is
+  saved as a public key.
 
   Args:
-    private_key: The private key.
-    public_key: The public key.
-    path: path to save
+      name (str): Base name for the saved key file (without extension).
+      key (RSAPrivateKey or RSAPublicKey): The RSA key to save.
+      path (str): Directory in which to save the key file.
+      private (bool, optional): If True, saves the key as a private key.
+          If False or None, saves it as a public key.
+
+  Returns:
+      str: The full path to the saved key file.
+
+  Example:
+      save_key("mykey", private_key, "./keys", private=True)
+      save_key("mykey", public_key, "./keys")
   """
   name=name+".pem"
 
@@ -128,6 +160,24 @@ def save_key(name, key, path, private=None):
 
 
 def newkeys(path=None):
+  """
+  Generates a new RSA key pair and saves them to disk.
+
+  This function creates a 4096-bit RSA key pair, saves them in a
+  timestamped folder, and prints the path to that folder.
+
+  Args:
+      path (str, optional): The directory in which to save the keys. 
+          If None, keys are saved in the current working directory.
+
+  Returns:
+      str: The full path to the directory where the key pair was saved.
+
+  Example:
+      >>> key_dir = newkeys("./keys")
+      >>> print("Keys saved to:", key_dir)
+  """
+
   private_key, public_key=generate_key_pair()
   path=save_key_pair(private_key, public_key,path)
   print(path)
@@ -140,13 +190,22 @@ def newkeys(path=None):
 # - - - - - - - - - - Regenerating public key - - - - - - - - - - 
 
 def get_public_key(private_key_path, filename):
-  """Extracts the public key from a private key file.
+  """
+  Extracts the public key from a private key file and saves it as a PEM file.
+
+  This function loads a private RSA key from the specified file, derives the
+  corresponding public key, and saves it to a new PEM file in the same directory.
 
   Args:
-    private_key_path: Path to the private key file.
+      private_key_path (str): The path to the PEM-encoded private key file.
+      filename (str): The desired name (without extension) for the saved public key file.
 
   Returns:
-    The public key as a bytes object and saves it in the same dir as the privatekey.
+      str: The full path to the saved public key file.
+
+  Example:
+      >>> pubkey_path = get_public_key("keys/private_key.pem", "public_key")
+      >>> print("Public key saved at:", pubkey_path)
   """
 
   with open(private_key_path, 'rb') as key_file:
@@ -234,7 +293,43 @@ def decrypt_rsa(ciphertext, private_key):
 
 
 def encryptfile(filepath, public_key):
-  """Encrypts the file data using the public key."""
+  """
+  Encrypts a file's contents using AES-256 (GCM) and encrypts the AES key with RSA.
+
+  This function reads the contents of a file, encrypts the data with AES-256-GCM 
+  using a randomly generated key and IV, and then encrypts the key, IV, and file 
+  extension using the provided RSA public key. It also generates a fingerprint 
+  of the public key for verification during decryption.
+
+  Args:
+      filepath (str): The path to the file that will be encrypted.
+      public_key (RSAPublicKey): The RSA public key used to encrypt the AES key and metadata.
+
+  Returns:
+      dict or bool: A dictionary containing the encrypted data and metadata
+      (such as fingerprint, encrypted key/IV, ciphertext, etc.), or False if the file is empty.
+
+  Returned Dictionary Structure:
+      {
+          'magic': "Mythcrypt",                 # Identifier for format validation
+          'version': '0.1.0',                   # Version of the encryption schema
+          'fingerprint': <SHA-256 of public key>,
+          'timestamp': <UNIX timestamp>,
+          'key': <hex-encoded RSA-encrypted AES key>,
+          'iv': <hex-encoded RSA-encrypted IV>,
+          'fileformat': <hex-encoded RSA-encrypted file extension>,
+          'ciphertext': <base64-encoded ciphertext>,
+          'tag': <hex-encoded GCM authentication tag>
+      }
+
+  Raises:
+      FileNotFoundError: If the file at `filepath` does not exist.
+
+  Example:
+      >>> enc = encryptfile("secret.txt", public_key)
+      >>> with open("secret.scroll", "w") as f:
+      ...     json.dump(enc, f, indent=4)
+  """
 
   # generate a fingerprint of the key 
   
@@ -299,7 +394,38 @@ def encryptfile(filepath, public_key):
 
 
 def decryptfile(encrypted_data, private_key):
-  """Decrypts the encrypted file data using the private key."""
+  """
+  Decrypts AES-encrypted file data using a provided RSA private key.
+
+  This function verifies the metadata and fingerprint, decrypts the AES key, 
+  IV, and file format using the RSA private key, and then uses the AES-GCM 
+  algorithm to decrypt the ciphertext. It also verifies the integrity of the 
+  encrypted data using the authentication tag.
+
+  Args:
+      encrypted_data (dict): The dictionary containing encrypted fields 
+          generated by the `encryptfile()` function.
+      private_key (RSAPrivateKey): The RSA private key used to decrypt 
+          the AES key and associated metadata.
+
+  Returns:
+      tuple: A tuple `(databytes, fileformat)` where:
+          - `databytes` (bytes): The decrypted content of the file.
+          - `fileformat` (str): The original file extension (e.g., "txt").
+
+      Returns `False` if verification fails or decryption is unsuccessful.
+      Returns `"Invalid Tag Length"` if the tag size is incorrect.
+
+  Raises:
+      None directly, but logs any exception that occurs during decryption.
+
+  Example:
+      >>> with open("secret.scroll", "r") as f:
+      ...     encrypted_data = json.load(f)
+      >>> decrypted_data, ext = decryptfile(encrypted_data, private_key)
+      >>> with open("recovered." + ext, "wb") as f:
+      ...     f.write(decrypted_data)
+  """
 
   # Validate the header
   if encrypted_data.get('magic') != "Mythcrypt":
